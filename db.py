@@ -78,6 +78,12 @@ class DB:
         else:
             return False
 
+    def truncate(self):
+        self.cur.execute("DELETE FROM prize")
+        self.cur.execute("DELETE FROM participant")
+        self.cur.execute("DELETE FROM promo")
+        self.cur.execute("DELETE FROM result")
+        self.con.commit()
 
 
 
