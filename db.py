@@ -22,11 +22,10 @@ class DB:
         return id
 
     def new_prize(self, promo_id: str, desc: str) -> int:
-        self.cur.execute('INSERT INTO prize (description, promo_id) VALUES (?, ?)', (desc, promo_id))
-        id = self.cur.lastrowid
+        prize_id = len(self.cur.execute('SELECT * FROM prize WHERE promo_id=?', (promo_id,)).fetchall())
+        self.cur.execute('INSERT INTO prize (id, description, promo_id) VALUES (?, ?, ?)', (prize_id, desc, promo_id))
         self.con.commit()
-        return id
-
+        return prize_id
 
     def change_promo(self, name: str, desc: str, id: int or str) -> bool:
         print(id)
@@ -39,17 +38,36 @@ class DB:
         return [{"id": i[0], "name": i[1], "description": i[2]} for i in self.cur.fetchall()]
 
     def del_promo(self, id: int or str) -> bool:
-        self.cur.execute('DELETE FROM promo WHERE id=?', (str(id)))
-        self.con.commit()
-        return True
+        select_prize = self.cur.execute('SELECT id FROM promo WHERE id=?', (id,)).fetchone()
+        if select_prize:
+            self.cur.execute('DELETE FROM promo WHERE id=?', (str(id)))
+            self.con.commit()
+            return True
+        else:
+            return False
 
-    def info_promo(self, id: int or str) -> dict:
-        promo = list(self.cur.execute("SELECT * FROM promo WHERE id=?", (str(id))).fetchone())
-        promo = dict({"id": promo[0], 'name': promo[1], 'description': promo[2]})
-        parct = self.cur.execute("SELECT id, name FROM participant WHERE promo_id=?", (str(id))).fetchall()
-        prize = self.cur.execute("SELECT id, description FROM prize WHERE promo_id=?", (str(id))).fetchall()
-        promo.update({"prizes": [{"id": i[0], 'name': i[1]} for i in prize]})
-        promo.update({"participants": [{"id": i[0], 'name': i[1]} for i in parct]})
+    def del_prize(self, id_promo: int or str, id_prize) -> bool:
+        select_prize = self.cur.execute('SELECT id FROM prize WHERE id=? AND promo_id=?', (str(id_prize), str(id_promo))).fetchone()
+        if select_prize and len(select_prize) > 0:
+            self.cur.execute('DELETE FROM prize WHERE id=? AND promo_id=?', (str(id_prize), str(id_promo)))
+            self.con.commit()
+            return True
+        else:
+            return False
 
-        return promo
+    def info_promo(self, id: int or str) -> dict or bool:
+        result = self.cur.execute("SELECT * FROM promo WHERE id=?", (str(id))).fetchone()
+        if result:
+            promo = list(self.cur.execute("SELECT * FROM promo WHERE id=?", (str(id))).fetchone())
+            promo = dict({"id": promo[0], 'name': promo[1], 'description': promo[2]})
+            parct = self.cur.execute("SELECT id, name FROM participant WHERE promo_id=?", (str(id))).fetchall()
+            prize = self.cur.execute("SELECT id, description FROM prize WHERE promo_id=?", (str(id))).fetchall()
+            promo.update({"prizes": [{"id": i[0], 'name': i[1]} for i in prize]})
+            promo.update({"participants": [{"id": i[0], 'name': i[1]} for i in parct]})
+
+            return promo
+        else:
+            return False
+
+    def raffle(self, promo_id):
 

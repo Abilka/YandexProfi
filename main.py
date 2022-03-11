@@ -6,6 +6,8 @@ from db import DB
 app = Flask(__name__)
 
 BAD_REQUEST = flask.Response(status=400)
+NICE_REQUEST = flask.Response(status=200)
+CONFLICT = flask.Response(status=409)
 
 @app.route("/promo", methods=['POST'])
 def post_promo():
@@ -24,6 +26,7 @@ def post_prize(id):
     else:
         return BAD_REQUEST
 
+
 @app.route("/promo/<int:id>/participant", methods=['POST'])
 def new_participant(id):
     data = flask.request.json
@@ -32,6 +35,11 @@ def new_participant(id):
     else:
         return BAD_REQUEST
 
+
+@app.route("/promo/<int:id>/raffle", methods=['POST'])
+def raffle(promo_id):
+    ...
+
 @app.route("/promo", methods=['GET'])
 def get_promo():
     return flask.Response(str(DB().get_promo()), status=200)
@@ -39,7 +47,11 @@ def get_promo():
 
 @app.route("/promo/<int:id>", methods=['GET'])
 def info_promo(id):
-    return flask.Response(str(DB().info_promo(id)), status=200)
+    result = DB().info_promo(id)
+    if result is not False:
+        return flask.Response(str(result), status=200)
+    else:
+        return BAD_REQUEST
 
 
 @app.route("/promo/<int:id>", methods=['PUT'])
@@ -53,9 +65,18 @@ def put_promo(id):
 
 @app.route("/promo/<int:id>", methods=['DELETE'])
 def del_promo(id):
-    DB().del_promo(id)
-    return flask.Response(status=200)
+    if DB().del_promo(id):
+        return NICE_REQUEST
+    else:
+        return BAD_REQUEST
 
+
+@app.route("/promo/<int:promo_id>/prize/<int:prize_id>", methods=['DELETE'])
+def del_prize(promo_id, prize_id):
+    if DB().del_prize(promo_id, prize_id):
+        return NICE_REQUEST
+    else:
+        return BAD_REQUEST
 
 
 
