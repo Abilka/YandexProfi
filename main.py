@@ -37,8 +37,13 @@ def new_participant(id):
 
 
 @app.route("/promo/<int:id>/raffle", methods=['POST'])
-def raffle(promo_id):
-    ...
+def raffle(id):
+    result = DB().raffle(id)
+    if result is not False:
+        return result
+    else:
+        return CONFLICT
+
 
 @app.route("/promo", methods=['GET'])
 def get_promo():

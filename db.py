@@ -1,3 +1,4 @@
+import random
 import sqlite3
 import typing
 
@@ -16,10 +17,10 @@ class DB:
         return id
 
     def new_participant(self, name: str, promo_id: int) -> int or str:
-        self.cur.execute('INSERT INTO participant (name, promo_id) VALUES (?, ?)', (name, promo_id))
-        id = self.cur.lastrowid
+        people_id = len(self.cur.execute('SELECT * FROM participant WHERE promo_id=?', (promo_id,)).fetchall())
+        self.cur.execute('INSERT INTO participant (id, name, promo_id) VALUES (?, ?, ?)', (people_id, name, promo_id))
         self.con.commit()
-        return id
+        return people_id
 
     def new_prize(self, promo_id: str, desc: str) -> int:
         prize_id = len(self.cur.execute('SELECT * FROM prize WHERE promo_id=?', (promo_id,)).fetchall())
@@ -69,5 +70,14 @@ class DB:
         else:
             return False
 
-    def raffle(self, promo_id):
+    def raffle(self, promo_id: int or str) -> dict or bool:
+        promo_id = str(promo_id)
+        promo = self.info_promo(promo_id)
+        if promo and len(promo.get('participants')) >= len(promo.get('prizes')):
+            return {'winner': promo.get('participants')[:len(promo.get('prizes'))+1], "prize": promo.get('prizes')}
+        else:
+            return False
+
+
+
 
